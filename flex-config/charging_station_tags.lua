@@ -30,6 +30,11 @@ tables.socket = osm2pgsql.define_node_table('socket', {
     { column = 'geom', type = 'point', projection = srid }
 })
 
+tables.country = osm2pgsql.define_way_table('country', {
+    { column = 'name', type = 'text' },
+    { column = 'geom', type = 'polygon', projection = srid }
+})
+
 -- tables.socket_type = osm2pgsql.define_node_table('socket_type', {
 --     { column = 'type', type = 'text' },
 --     { column = 'geom', type = 'point', projection = srid }
@@ -114,5 +119,13 @@ function osm2pgsql.process_node(object)
         })
 
     end
+
+end
+
+function osm2pgsql.process_way(object)
+
+tables.country:add_row({
+    name = object.tags["name:en"]
+})
 
 end

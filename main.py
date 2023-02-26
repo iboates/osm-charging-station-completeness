@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess as sp
+import warnings
 
 import fire
 import requests
@@ -14,16 +15,13 @@ import plotly.graph_objects as go
 
 def _filter_pbf(pbf, filtered_pbf):
 
-    """
-    osmium tags-filter australia-oceania-latest.osm.pbf /admin_level /highway /water /waterway /wetland
-    -o australia-oceania-filtered.osm.pbf --overwrite
-    """
-
     args = [
         "osmium",
         "tags-filter",
         pbf,
+        # remember, filter args are ALWAYS treated as chained ORs, not chained ANDs
         "n/amenity=charging_station",
+        "w/admin_level=2",
         "-o", filtered_pbf,
         "--overwrite"
     ]
@@ -76,9 +74,13 @@ class CLI:
 
     def __init__(self):
         load_dotenv()
-        self.conn = pg2.connect(host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), dbname=os.getenv("DB_NAME"),
-                           user=os.getenv("DB_USER"), password=os.getenv("DB_PASS"))
-        self.conn.autocommit = True
+        try:
+            self.conn = pg2.connect(host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), dbname=os.getenv("DB_NAME"),
+                               user=os.getenv("DB_USER"), password=os.getenv("DB_PASS"))
+            self.conn.autocommit = True
+        except pg2.OperationalError:
+            warnings.warn("Could not connect to PostGIS database.")
+            self.conn = None
 
     def compile_pbfs(self, pbf_urls, final_pbf="final.pbf", work_dir="data"):
 
@@ -107,6 +109,9 @@ class CLI:
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"))
 
     def analyze_tags(self, tags):
+
+        if self.conn is None:
+            raise RuntimeError("Could not connect to PostGIS database.")
 
         if isinstance(tags, str):
             tags = tags.split(",")
@@ -138,6 +143,9 @@ class CLI:
         fig.show()
 
     def export_osm_ids_with_errors(self, sql_file="sql/capacity_with_suspicious_value.sql", out_file="data/out/errors.gpkg"):
+
+        if self.conn is None:
+            raise RuntimeError("Could not connect to PostGIS database.")
 
         with open(sql_file) as f:
             query = f.read()
