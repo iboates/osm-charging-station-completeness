@@ -103,7 +103,7 @@ class CLI:
                 # dont know why, but overwriting final.pbf directly with merge results in a smaller output pbf
                 shutil.move(final_pbf.replace(".pbf", ".2.pbf"), final_pbf)
 
-    def create_postgis(self, pbf, flex_config="flex-config/charging_station_tags_v1.7.lua"):
+    def create_postgis(self, pbf="data/final.pdf", flex_config="flex-config/charging_station_tags_v1.7.lua"):
 
         _osm2pgsql(pbf, os.getenv("DB_NAME"), os.getenv("DB_USER"), os.getenv("DB_PASS"), schema="public",
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
