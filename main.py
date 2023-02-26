@@ -21,7 +21,7 @@ def _filter_pbf(pbf, filtered_pbf):
         pbf,
         # remember, filter args are ALWAYS treated as chained ORs, not chained ANDs
         "n/amenity=charging_station",
-        "admin_level",
+        #"admin_level",
         "-o", filtered_pbf,
         "--overwrite"
     ]
@@ -84,7 +84,7 @@ class CLI:
             warnings.warn("Could not connect to PostGIS database.")
             self.conn = None
 
-    def compile_pbfs(self, pbf_urls, final_pbf="final.pbf", work_dir="data"):
+    def compile_pbfs(self, pbf_urls, final_pbf="data/final.pbf", work_dir="data"):
 
         if isinstance(pbf_urls, str):
             pbf_urls = pbf_urls.split(",")
@@ -105,42 +105,38 @@ class CLI:
                 # dont know why, but overwriting final.pbf directly with merge results in a smaller output pbf
                 shutil.move(final_pbf.replace(".pbf", ".2.pbf"), final_pbf)
 
-    def create_postgis(self, pbf="data/final.pdf", flex_config="flex-config/charging_station_tags_v1.7.lua"):
+    def create_postgis(self, pbf="data/final.pdf", flex_config="flex-config/charging_station_tags.lua"):
 
         _osm2pgsql(pbf, os.getenv("DB_NAME"), os.getenv("DB_USER"), os.getenv("DB_PASS"), schema="public",
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
 
-    def analyze_tags(self, tags):
+    def analyze_capacity(self):
 
         if self.conn is None:
             raise RuntimeError("Could not connect to PostGIS database.")
 
-        if isinstance(tags, str):
-            tags = tags.split(",")
+        fig = make_subplots(rows=1, cols=1)
+        query = """
+            select
+                count(*) as total,
+                capacity
+            from
+                charging_station
+            group by
+                capacity
+            order by
+                count(*) desc
+            ;
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            tag_df = pd.DataFrame(cur.fetchall(), columns=["count", "tag_value"])
 
-        fig = make_subplots(rows=len(tags), cols=1)
-        for i, tag in enumerate(tags, start=1):
-            query = """
-                select
-                    count(*) as total,
-                    tags->>%(tag)s as tag_value
-                from
-                    planet_osm_point
-                group by
-                    tags->>%(tag)s
-                order by
-                    count(*) desc
-                ;
-            """
-            with self.conn.cursor() as cur:
-                cur.execute(query, {"tag": tag})
-                tag_df = pd.DataFrame(cur.fetchall(), columns=["count", "tag_value"])
-
-            trace = go.Bar(
-                y=tag_df["count"].to_list(),
-                x=tag_df["tag_value"].to_list()
-            )
-            fig.add_trace(trace, row=i, col=1)
+        trace = go.Bar(
+            y=tag_df["count"].to_list(),
+            x=tag_df["tag_value"].to_list()
+        )
+        fig.add_trace(trace, row=1, col=1)
 
         fig.show()
 
