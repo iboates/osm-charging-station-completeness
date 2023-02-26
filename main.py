@@ -60,6 +60,7 @@ def _osm2pgsql(pbf, database, username, password, schema, host, port, flex_confi
         "--hstore",
         "-O", "flex",
         "-S", flex_config,
+        "-r",
         pbf,
     ]
     print(args)
