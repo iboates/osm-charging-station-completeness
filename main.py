@@ -2,17 +2,14 @@ import os
 import shutil
 import subprocess as sp
 
-from api import OCMAPI
-import geopandas as gpd
 import fire
 import requests
 from dotenv import load_dotenv
 import pandas as pd
+import geopandas as gpd
 import psycopg2 as pg2
-import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-
 
 
 def _filter_pbf(pbf, filtered_pbf):
@@ -109,14 +106,6 @@ class CLI:
         _osm2pgsql(pbf, os.getenv("DB_NAME"), os.getenv("DB_USER"), os.getenv("DB_PASS"), schema="public",
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"))
 
-    def hstore_to_jsonb(self):
-
-        query = """
-            alter table planet_osm_point alter column tags type json using hstore_to_json(tags)
-        """
-        with self.conn.cursor() as cur:
-            cur.execute(query)
-
     def analyze_tags(self, tags):
 
         if isinstance(tags, str):
@@ -148,31 +137,12 @@ class CLI:
 
         fig.show()
 
-    def _get_osm_ids_with_errors(self, sql_file):
+    def export_osm_ids_with_errors(self, sql_file="sql/capacity_with_suspicious_value.sql", out_file="data/out/errors.gpkg"):
 
-        with self.conn.cursor() as cur:
-            with open(sql_file) as f:
-                cur.execute(f.read())
-            error_osm_ids = [i[0] for i in cur.fetchall()]
-        return error_osm_ids
-
-    def summarize_errors(self):
-
-        errors = {
-            "capacity": {
-                "using_power_output_with_high_certainty": self._get_osm_ids_with_errors("sql/capacity_using_power_output_with_high_certainty.sql"),
-                "missing": self._get_osm_ids_with_errors("sql/capacity_missing.sql")
-            },
-            "socket": {
-
-            },
-            "eu_reference_number": {
-                # todo: only for EU countries
-                "missing": self._get_osm_ids_with_errors("sql/eu_reference_number_missing.sql")
-            }
-        }
-
-        print()
+        with open(sql_file) as f:
+            query = f.read()
+        gdf = gpd.read_postgis(query, self.conn)
+        gdf.to_file(out_file)
 
 
 if __name__ == "__main__":

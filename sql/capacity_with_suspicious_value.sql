@@ -6,7 +6,7 @@ AS $$
 $$;
 
 select
-    cs.node_id,
+    -- cs.node_id,
     cs.capacity,
     array_greatest(string_to_array(trim(regexp_replace(capacity, '\D+', ',', 'g'), ','), ',')::int[]) as greatest_number_found_in_capacity,
     s.*
