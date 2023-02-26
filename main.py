@@ -62,6 +62,7 @@ def _osm2pgsql(pbf, database, username, password, schema, host, port, flex_confi
         "-S", flex_config,
         pbf,
     ]
+    print(args)
 
     if schema != "public":
         args = args[:-1] + [f"--output-pgsql-schema={schema}"] + [args[-1]]
