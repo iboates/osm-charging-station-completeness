@@ -56,7 +56,7 @@ function osm2pgsql.process_node(object)
         return
     end
 
-    tables.charging_station:add_row({
+    tables.charging_station:insert({
         brand = object.tags.brand,
         operator = object.tags.operator,
         network = object.tags.network,
@@ -92,7 +92,7 @@ function osm2pgsql.process_node(object)
                 if not has_value(socket_types, socket_type) then
                     -- socket:type2
                     socket_types[i] = socket_type
---                     tables.socket_type:add_row({
+--                     tables.socket_type:insert({
 --                         type = socket_type
 --                     })
                     i = i + 1
@@ -110,7 +110,7 @@ function osm2pgsql.process_node(object)
         current = object.tags["socket:"..socket_type..":current"]
         output = object.tags["socket:"..socket_type..":output"]
         voltage = object.tags["socket:"..socket_type..":voltage"]
-        tables.socket:add_row({
+        tables.socket:insert({
             content = content,
             type = socket_type,
             number = number,
@@ -126,7 +126,7 @@ end
 
 function osm2pgsql.process_way(object)
 
-tables.country:add_row({
+tables.country:insert({
     name = object.tags["name:en"],
     geom = object.as_polygon()
 
