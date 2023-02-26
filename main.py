@@ -48,7 +48,7 @@ def _download(pbf_url, pbf):
                 shutil.copyfileobj(r.raw, f)
 
 
-def _osm2pgsql(pbf, database, username, password, schema, host, port, slim=False):
+def _osm2pgsql(pbf, database, username, password, schema, host, port, flex_config, slim=False):
 
     args = [
         "osm2pgsql",
@@ -59,7 +59,7 @@ def _osm2pgsql(pbf, database, username, password, schema, host, port, slim=False
         "-l",  # EPSG 4326
         "--hstore",
         "-O", "flex",
-        "-S", "flex-config/charging_station_tags.lua",
+        "-S", flex_config,
         pbf,
     ]
 
@@ -103,10 +103,10 @@ class CLI:
                 # dont know why, but overwriting final.pbf directly with merge results in a smaller output pbf
                 shutil.move(final_pbf.replace(".pbf", ".2.pbf"), final_pbf)
 
-    def create_postgis(self, pbf):
+    def create_postgis(self, pbf, flex_config="flex-config/charging_station_tags_v1.7.lua"):
 
         _osm2pgsql(pbf, os.getenv("DB_NAME"), os.getenv("DB_USER"), os.getenv("DB_PASS"), schema="public",
-                   host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"))
+                   host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
 
     def analyze_tags(self, tags):
 
