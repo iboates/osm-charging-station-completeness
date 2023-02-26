@@ -133,3 +133,17 @@ tables.country:insert({
 })
 
 end
+
+function osm2pgsql.process_relation(object)
+
+if not object.tags.admin_level then
+        return
+    end
+
+tables.country:insert({
+    name = object.tags["name:en"],
+    geom = object.as_polygon()
+
+})
+
+end

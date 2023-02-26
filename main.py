@@ -21,7 +21,7 @@ def _filter_pbf(pbf, filtered_pbf):
         pbf,
         # remember, filter args are ALWAYS treated as chained ORs, not chained ANDs
         "n/amenity=charging_station",
-        "w/admin_level",
+        "admin_level",
         "-o", filtered_pbf,
         "--overwrite"
     ]
