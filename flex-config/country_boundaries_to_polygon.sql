@@ -29,6 +29,6 @@ create table country as (
         b
     group by
         name
-)
+);
 
 drop table country_pre;
