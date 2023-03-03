@@ -30,7 +30,7 @@ tables.socket = osm2pgsql.define_node_table('socket', {
     { column = 'geom', type = 'point', projection = srid }
 })
 
-tables.country = osm2pgsql.define_way_table('country_pre', {
+tables.country_pre = osm2pgsql.define_way_table('country_pre', {
     { column = 'name', type = 'text' },
     { column = 'tags', type = 'jsonb' },
     { column = 'geom', type = 'geometrycollection', projection = srid }
