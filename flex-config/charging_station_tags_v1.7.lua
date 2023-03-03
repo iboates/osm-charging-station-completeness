@@ -120,16 +120,6 @@ function osm2pgsql.process_node(object)
 
 end
 
-function osm2pgsql.process_way(object)
-
-tables.country_pre:insert({
-    name = object.tags["name:en"],
-    geom = object.as_polygon()
-
-})
-
-end
-
 function osm2pgsql.process_relation(object)
 
     if object:grab_tag('admin_level') == "2" then
