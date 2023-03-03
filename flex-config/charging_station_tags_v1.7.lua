@@ -30,7 +30,7 @@ tables.socket = osm2pgsql.define_node_table('socket', {
     { column = 'geom', type = 'point', projection = srid }
 })
 
-tables.country = osm2pgsql.define_way_table('country', {
+tables.country = osm2pgsql.define_way_table('country_pre', {
     { column = 'name', type = 'text' },
     { column = 'tags', type = 'jsonb' },
     { column = 'geom', type = 'geometrycollection', projection = srid }
@@ -122,7 +122,7 @@ end
 
 function osm2pgsql.process_way(object)
 
-tables.country:insert({
+tables.country_pre:insert({
     name = object.tags["name:en"],
     geom = object.as_polygon()
 
@@ -133,7 +133,7 @@ end
 function osm2pgsql.process_relation(object)
 
     if object:grab_tag('admin_level') == "2" then
-    tables.country:insert({
+    tables.country_pre:insert({
         name = object.tags["name:en"],
         tags = object.tags,
         geom = object:as_geometrycollection()
