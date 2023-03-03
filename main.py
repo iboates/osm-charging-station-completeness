@@ -21,7 +21,7 @@ def _filter_pbf(pbf, filtered_pbf):
         pbf,
         # remember, filter args are ALWAYS treated as chained ORs, not chained ANDs
         "n/amenity=charging_station",
-        #"admin_level",
+        "boundary=administrative",
         "-o", filtered_pbf,
         "--overwrite"
     ]
@@ -72,6 +72,11 @@ def _osm2pgsql(pbf, database, username, password, schema, host, port, flex_confi
     sp.run(args, env={**os.environ.copy(), "PGPASSWORD": password})
 
 
+def _postprocess_osm_country_boundaries(conn):
+
+    conn.execute(open("data/flex-config/country_boundaries_to_polygon.sql"))
+
+
 class CLI:
 
     def __init__(self):
@@ -105,10 +110,11 @@ class CLI:
                 # dont know why, but overwriting final.pbf directly with merge results in a smaller output pbf
                 shutil.move(final_pbf.replace(".pbf", ".2.pbf"), final_pbf)
 
-    def create_postgis(self, pbf="data/final.pdf", flex_config="flex-config/charging_station_tags.lua"):
+    def create_postgis(self, pbf="data/final.pdf", flex_config="flex-config/charging_station_tags_v1.7.lua"):
 
         _osm2pgsql(pbf, os.getenv("DB_NAME"), os.getenv("DB_USER"), os.getenv("DB_PASS"), schema="public",
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
+        _postprocess_osm_country_boundaries(self.conn)
 
     def analyze_capacity(self):
 
