@@ -74,7 +74,8 @@ def _osm2pgsql(pbf, database, username, password, schema, host, port, flex_confi
 
 def _postprocess_osm_country_boundaries(conn):
 
-    conn.execute(open("data/flex-config/country_boundaries_to_polygon.sql"))
+    with conn.cursor() as cur:
+        cur.execute(open("data/flex-config/country_boundaries_to_polygon.sql"))
 
 
 class CLI:
