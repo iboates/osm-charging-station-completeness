@@ -23,7 +23,7 @@ create table country as (
     )
 
     select
-        (ST_Dump(st_polygonize(geom))).geom as geom,
+        ST_SimplifyPreserveTopology((ST_Dump(st_polygonize(geom))).geom, 0.00005) as geom,
         name
     from
         b
@@ -32,3 +32,5 @@ create table country as (
 );
 
 drop table country_pre;
+
+create index on country (geom) using gist;

@@ -11,6 +11,7 @@ import geopandas as gpd
 import psycopg2 as pg2
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from tqdm import tqdm
 
 
 def _filter_pbf(pbf, filtered_pbf):
@@ -98,9 +99,11 @@ class CLI:
         if os.path.exists(final_pbf):
             os.remove(final_pbf)
 
-        for pbf_url in pbf_urls:
+        pbar = tqdm(total=len(pbf_urls))
+        for pbf_url in tqdm(pbf_urls):
             pbf = f"{work_dir}/{pbf_url.split('/')[-1]}"
             pbf_filtered = pbf.replace(".osm.pbf", "_charging_stations.osm.pbf")
+            pbar.set_description(pbf)
 
             _download(pbf_url, pbf)
             _filter_pbf(pbf, pbf_filtered)
@@ -110,6 +113,7 @@ class CLI:
                 _merge_pbfs(pbf_filtered, final_pbf, final_pbf.replace(".pbf", ".2.pbf"))
                 # dont know why, but overwriting final.pbf directly with merge results in a smaller output pbf
                 shutil.move(final_pbf.replace(".pbf", ".2.pbf"), final_pbf)
+            pbar.update(1)
 
     def create_postgis(self, pbf="data/final.pdf", flex_config="flex-config/charging_station_tags_v1.7.lua"):
 
