@@ -33,4 +33,4 @@ create table country as (
 
 drop table country_pre;
 
-create index on country (geom) using gist;
+create index on country using gist (geom);
