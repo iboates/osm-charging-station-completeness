@@ -21,7 +21,7 @@ def _filter_pbf(pbf, filtered_pbf):
         "tags-filter",
         pbf,
         # remember, filter args are ALWAYS treated as chained ORs, not chained ANDs
-        "n/amenity=charging_station",
+        "amenity=charging_station",
         "boundary=administrative",
         "-o", filtered_pbf,
         "--overwrite"
@@ -121,22 +121,33 @@ class CLI:
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
         _postprocess_osm_country_boundaries(self.conn)
 
-    def analyze_capacity(self):
+    def analyze_capacity(self, country_names):
 
         if self.conn is None:
             raise RuntimeError("Could not connect to PostGIS database.")
 
+        if not isinstance(country_names, tuple):
+            country_names = tuple(cn.lower for cn in country_names.split(","))
+
         fig = make_subplots(rows=1, cols=1)
-        query = """
+        query = f"""
             select
-                count(*) as total,
-                capacity
+                -- cs.node_id,
+                c.name as country,
+                cs.capacity as capacity,
+                count(cs.capacity) as num
             from
-                charging_station
+                charging_station cs
+                left join socket s on cs.node_id = s.node_id
+                left join country c on ST_Intersects(c.geom, cs.geom)
+            where
+               lower(c.name) in {country_names}
             group by
-                capacity
+                c.name,
+                cs.capacity
             order by
-                count(*) desc
+                c.name asc,
+                num desc
             ;
         """
         with self.conn.cursor() as cur:
