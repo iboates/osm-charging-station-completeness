@@ -2,3 +2,5 @@ api/
 data/
 notes/
 .env
+report/
+sqldialects.xml

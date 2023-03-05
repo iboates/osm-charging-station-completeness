@@ -121,57 +121,6 @@ class CLI:
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
         _postprocess_osm_country_boundaries(self.conn)
 
-    def analyze_capacity(self, country_names):
-
-        if self.conn is None:
-            raise RuntimeError("Could not connect to PostGIS database.")
-
-        if not isinstance(country_names, tuple):
-            country_names = tuple(cn.lower for cn in country_names.split(","))
-
-        fig = make_subplots(rows=1, cols=1)
-        query = f"""
-            select
-                -- cs.node_id,
-                c.name as country,
-                cs.capacity as capacity,
-                count(cs.capacity) as num
-            from
-                charging_station cs
-                left join socket s on cs.node_id = s.node_id
-                left join country c on ST_Intersects(c.geom, cs.geom)
-            where
-               lower(c.name) in {country_names}
-            group by
-                c.name,
-                cs.capacity
-            order by
-                c.name asc,
-                num desc
-            ;
-        """
-        with self.conn.cursor() as cur:
-            cur.execute(query)
-            tag_df = pd.DataFrame(cur.fetchall(), columns=["count", "tag_value"])
-
-        trace = go.Bar(
-            y=tag_df["count"].to_list(),
-            x=tag_df["tag_value"].to_list()
-        )
-        fig.add_trace(trace, row=1, col=1)
-
-        fig.show()
-
-    def export_osm_ids_with_errors(self, sql_file="sql/capacity_with_suspicious_value.sql", out_file="data/out/errors.gpkg"):
-
-        if self.conn is None:
-            raise RuntimeError("Could not connect to PostGIS database.")
-
-        with open(sql_file) as f:
-            query = f.read()
-        gdf = gpd.read_postgis(query, self.conn)
-        gdf.to_file(out_file)
-
 
 if __name__ == "__main__":
     fire.Fire(CLI)
