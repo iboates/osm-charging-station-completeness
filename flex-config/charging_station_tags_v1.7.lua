@@ -45,6 +45,13 @@ tables.country_pre = osm2pgsql.define_way_table('country_pre', {
     { column = 'geom', type = 'geometrycollection', projection = srid }
 })
 
+tables.place = osm2pgsql.define_node_table('place', {
+    { column = 'name', type = 'text' },
+    { column = 'place', type = 'text' },
+    { column = 'tags', type = 'jsonb' },
+    { column = 'geom', type = 'point', projection = srid }
+})
+
 function has_value (tab, val)
     for index, value in ipairs(tab) do
         if value == val then
@@ -135,77 +142,24 @@ end
 
 function osm2pgsql.process_node(object)
 
-    if not object.tags.amenity or object.tags.amenity ~= 'charging_station' then
+    -- if not object.tags.amenity or object.tags.amenity ~= 'charging_station' then
+    --     return
+    -- end
+
+    if object:grab_tag('amenity') == "charging_station" then
+        process_charging_station(object)
         return
     end
 
-    process_charging_station(object)
-
-    --tables.charging_station:insert({
-    --    brand = object.tags.brand,
-    --    operator = object.tags.operator,
-    --    network = object.tags.network,
-    --    capacity = object.tags.capacity,
-    --    ref = object.tags.ref,
-    --    voltage = object.tags.voltage,
-    --    socket = object.tags.socket,
-    --    authentication = object.tags.authentication,
-    --    fee = object.tags.fee,
-    --    parking_fee = object.tags.parking_fee,
-    --    maxstay = object.tags.maxstay,
-    --    opening_hours = object.tags.opening_hours,
-    --    payment = object.tags.payment,
-    --    tags = object.tags,
-    --    geom = object.as_point()
-    --})
---
-    --content = nil
-    --type = nil
-    --number = nil
-    --current = nil
-    --output = nil
-    --voltage = nil
---
-    --socket_types = {}
-    --i = 0
---
-    ---- look for socket types
-    --for k, v in pairs(object.tags) do
-    --    if k ~= "socket" then
-    --        if osm2pgsql.has_prefix(k, "socket") then
-    --            socket_type = string.match(k, "socket:(%w+)")
-    --            if not has_value(socket_types, socket_type) then
-    --                -- socket:type2
-    --                socket_types[i] = socket_type
---  --                   tables.socket_type:insert({
---  --                       type = socket_type
---  --                   })
-    --                i = i + 1
-    --            end
-    --        end
-    --    end
-    --end
---
-    --content = object.tags.socket
---
-    ---- look for any socket properties
-    --for k, socket_type in pairs(socket_types) do
---
-    --    number = object.tags["socket:"..socket_type]
-    --    current = object.tags["socket:"..socket_type..":current"]
-    --    output = object.tags["socket:"..socket_type..":output"]
-    --    voltage = object.tags["socket:"..socket_type..":voltage"]
-    --    tables.socket:insert({
-    --        content = content,
-    --        type = socket_type,
-    --        number = number,
-    --        current = current,
-    --        output = output,
-    --        voltage = voltage,
-    --        geom = object.as_point()
-    --    })
---
-    --end
+    if object:grab_tag('place') ~= nil then
+        tables.place:insert({
+            name = object.tags["name:en"],
+            place = object.tags["place"],
+            tags = object.tags,
+            geom = object:as_point()
+        })
+        return
+     end
 
 end
 
@@ -222,11 +176,11 @@ end
 function osm2pgsql.process_relation(object)
 
     if object:grab_tag('admin_level') == "2" then
-    tables.country_pre:insert({
-        name = object.tags["name:en"],
-        tags = object.tags,
-        geom = object:as_geometrycollection()
-    })
+        tables.country_pre:insert({
+            name = object.tags["name:en"],
+            tags = object.tags,
+            geom = object:as_geometrycollection()
+        })
     end
 
 end
