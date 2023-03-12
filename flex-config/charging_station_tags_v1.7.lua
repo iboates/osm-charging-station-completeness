@@ -151,9 +151,9 @@ function osm2pgsql.process_node(object)
         return
     end
 
-    if object:grab_tag('place') ~= nil then
+    if object.tags["place"] ~= nil then
         tables.place:insert({
-            name = object.tags["name:en"],
+            name = object.tags["name"],
             place = object.tags["place"],
             tags = object.tags,
             geom = object:as_point()

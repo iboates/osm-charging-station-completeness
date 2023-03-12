@@ -73,11 +73,10 @@ def _osm2pgsql(pbf, database, username, password, schema, host, port, flex_confi
         args = [*args[:-2], "--slim", args[-1]]
     sp.run(args, env={**os.environ.copy(), "PGPASSWORD": password})
 
-
-def _postprocess_osm_country_boundaries(conn):
+def _execute_sql(conn, sql_file):
 
     with conn.cursor() as cur:
-        cur.execute(open("flex-config/country_boundaries_to_polygon.sql").read())
+        cur.execute(open(sql_file).read())
 
 
 class CLI:
@@ -116,11 +115,12 @@ class CLI:
                 shutil.move(final_pbf.replace(".pbf", ".2.pbf"), final_pbf)
             pbar.update(1)
 
-    def create_postgis(self, pbf="data/final.pdf", flex_config="flex-config/charging_station_tags_v1.7.lua"):
+    def create_postgis(self, pbf="data/final.pbf", flex_config="flex-config/charging_station_tags_v1.7.lua"):
 
         _osm2pgsql(pbf, os.getenv("DB_NAME"), os.getenv("DB_USER"), os.getenv("DB_PASS"), schema="public",
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
-        _postprocess_osm_country_boundaries(self.conn)
+        _execute_sql(self.conn, "flex-config/country_boundaries_to_polygon.sql")
+        _execute_sql(self.conn, "flex-config/cs_completeness.sql")
 
 
 if __name__ == "__main__":
