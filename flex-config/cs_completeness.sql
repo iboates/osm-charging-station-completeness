@@ -12,6 +12,7 @@ create table cs_completeness as (
         case when cs.opening_hours is not null then true else false end as opening_hours,
         case when cs.payment is not null then true else false end as payment,
         case when cs.socket is not null then true else false end as socket,
+        case when cs.number is not null then true else false end as number,
         case when cs.voltage is not null then true else false end as voltage,
         case when cs.output is not null then true else false end as output,
         case when cs.current is not null then true else false end as current,

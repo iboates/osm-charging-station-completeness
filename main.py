@@ -7,10 +7,7 @@ import fire
 import requests
 from dotenv import load_dotenv
 import pandas as pd
-import geopandas as gpd
 import psycopg2 as pg2
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 from tqdm import tqdm
 import sqlalchemy as sa
 
@@ -74,23 +71,16 @@ def _osm2pgsql(pbf, database, username, password, schema, host, port, flex_confi
         args = [*args[:-2], "--slim", args[-1]]
     sp.run(args, env={**os.environ.copy(), "PGPASSWORD": password})
 
-def _execute_sql(engine, sql_file):
-
-    engine.execute(open(sql_file).read())
-
 
 class CLI:
 
     def __init__(self):
         load_dotenv()
         try:
-            self.conn = pg2.connect(host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), dbname=os.getenv("DB_NAME"),
-                               user=os.getenv("DB_USER"), password=os.getenv("DB_PASS"))
-            self.conn.autocommit = True
             self.engine = sa.create_engine(f'postgresql://{os.getenv("DB_USER")}:{os.getenv("DB_PASS")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{os.getenv("DB_NAME")}')
         except pg2.OperationalError:
             warnings.warn("Could not connect to PostGIS database.")
-            self.conn = None
+            self.engine = None
 
     def compile_pbfs(self, pbf_urls, final_pbf="data/final.pbf", work_dir="data"):
 
@@ -120,74 +110,26 @@ class CLI:
 
         _osm2pgsql(pbf, os.getenv("DB_NAME"), os.getenv("DB_USER"), os.getenv("DB_PASS"), schema="public",
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
-        _execute_sql(self.conn, "flex-config/country_boundaries_to_polygon.sql")
-        _execute_sql(self.conn, "flex-config/cs_completeness.sql")
-
+        self.execute_sql("flex-config/country_boundaries_to_polygon.sql")
+        self.execute_sql("flex-config/cs_completeness.sql")
 
     def execute_sql(self, sql_file):
 
         with self.engine.connect() as connection:
             connection.execute(sa.text(open(sql_file).read()))
 
-    def summarize(self, sql_file=None, tags=None):
+    def summarize(self):
 
-        if sql_file is None:
-            sql_file = "sql/get_completeness.sql"
+        res = pd.read_sql(sa.text(open("src/backend/sql/summarize_completeness.sql").read()),
+                          self.engine,
+                          dtype={"tag": pd.Int64Dtype(), "present": pd.Int64Dtype(), "missing": pd.Int64Dtype(), "present_in_parent": pd.Int64Dtype()})
 
-        if tags is None:
-            tags = [
-                "brand",
-                "operator",
-                "capacity",
-                "authentication",
-                "fee",
-                "parking_fee",
-                "maxstay",
-                "opening_hours",
-                "payment",
-                "socket",
-                "voltage",
-                "output",
-                "current",
-            ]
+    def server(self):
 
-        ALLOWED_TAGS = [
-            "brand",
-            "operator",
-            "capacity",
-            "authentication",
-            "fee",
-            "parking_fee",
-            "maxstay",
-            "opening_hours",
-            "payment",
-            "socket",
-            "voltage",
-            "output",
-            "current",
-        ]
+        from src import app
+        app.run(host="0.0.0.0", port=5000, debug=True)
 
-        SOCKET_TAGS = {
-            "socket": ":socket:type",
-            "number": ":socket:type:number",
-            "voltage": ":socket:type:output",
-            "output": ":socket:type:voltage",
-            "current": ":socket:type:current"
-        }
 
-        with open(sql_file) as f:
-            query = f.read()
-        with open("sql/tag_fragment.sql") as f:
-            tag_fragment = f.read()
-
-        tag_fragment_replacements = []
-        for tag in tags:
-            if tag not in ALLOWED_TAGS:
-                raise ValueError(f"Invalid tag `{tag}`")
-            tag_fragment_replacements.append(tag_fragment.replace("[[TAG_VALUE]]", tag))
-        query = query.replace("[[TAG_FRAGMENTS]]", ",\n\n UNION ALL \n\n".join(tag_fragment_replacements))
-
-        res = pd.read_sql(sa.text(query), self.engine)
 
 
 if __name__ == "__main__":
