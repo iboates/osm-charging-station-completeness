@@ -1,16 +1,23 @@
 version: "3.9"
 services:
-  ocm-db:
-    container_name: postgis
-    image: postgis/postgis
+  ocm-prod-db:
+    container_name: ocm-prod-db
+    image: postgis/postgis:13-master
     environment:
-      - POSTGRES_DB=freeman
-      - POSTGRES_USER=freeman
-      - POSTGRES_PASSWORD=freeman
+      - POSTGRES_DB=freeman_prod
+      - POSTGRES_USER=freeman_prod
+      - POSTGRES_PASSWORD=freeman_prod
     ports:
       - "5432:5432"
-  ocm-osmutils:
-    container_name: ocm-osm2pgsql
+  ocm-process-db:
+    container_name: ocm-process-db
+    image: postgis/postgis:13-master
+    environment:
+      - POSTGRES_DB=freeman_process
+      - POSTGRES_USER=freeman_process
+      - POSTGRES_PASSWORD=freeman_process
+    ports:
+      - "25432:5432"
+  ocm-process:
+    container_name: ocm-process
     build: .
-#    volumes:
-#      - /osm2pgsql/data:/home/freeman/PycharmProjects/osm-charging-station-analysis/data
