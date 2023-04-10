@@ -4,20 +4,50 @@ services:
     container_name: ocm-prod-db
     image: postgis/postgis:13-master
     environment:
-      - POSTGRES_DB=freeman_prod
-      - POSTGRES_USER=freeman_prod
-      - POSTGRES_PASSWORD=freeman_prod
+      - POSTGRES_DB=prod_db_name
+      - POSTGRES_USER=prod_db_user
+      - POSTGRES_PASSWORD=prod_db_pass
     ports:
       - "5432:5432"
-  ocm-process-db:
-    container_name: ocm-process-db
-    image: postgis/postgis:13-master
-    environment:
-      - POSTGRES_DB=freeman_process
-      - POSTGRES_USER=freeman_process
-      - POSTGRES_PASSWORD=freeman_process
-    ports:
-      - "25432:5432"
-  ocm-process:
-    container_name: ocm-process
-    build: .
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+        #  ocm-process-db:
+        #container_name: ocm-process-db
+        #image: postgis/postgis:13-master
+        #    environment:
+        #- POSTGRES_DB=process_db_name
+        #- POSTGRES_USER=process_db_user
+        #- POSTGRES_PASSWORD=process_db_pass
+        #ports:
+        #- "25432:5432"
+        #healthcheck:
+        #test: [ "CMD", "pg_isready" ]
+        #interval: 10s
+        #timeout: 10s
+        #      retries: 10
+        #      start_period: 10s
+        #    depends_on:
+        #      ocm-prod-db:
+        #          condition: service_healthy
+        #  ocm-process:
+        #    container_name: ocm-process
+        #    build: .
+        #    environment:
+        #      - PBF_DOWNLOAD_LINK=https://planet.osm.org/pbf/planet-latest.osm.pbf
+        #      - PROCESS_DB_HOST=ocm-process-db
+        #      - PROCESS_DB_PORT=5432
+        #      - PROCESS_DB_NAME=process_db_name
+        #      - PROCESS_DB_USER=process_db_user
+        #      - PROCESS_DB_PASS=process_db_pass
+        #      - PROD_DB_HOST=ocm-prod-db
+        #      - PROD_DB_PORT=5432
+        #      - PROD_DB_NAME=prod_db_name
+        #      - PROD_DB_USER=prod_db_user
+        #      - PROD_DB_PASS=prod_db_pass
+        #    depends_on:
+        #      ocm-process-db:
+        #          condition: service_healthy
