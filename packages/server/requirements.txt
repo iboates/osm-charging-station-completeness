@@ -1,0 +1,6 @@
+flask
+geojson
+geopandas
+psycopg2-binary
+python-dotenv
+sqlalchemy

@@ -1,5 +1,5 @@
-drop table if exists city;
-create table city as (
+drop table if exists country;
+create table country as (
 
     with a as (
         select
@@ -7,7 +7,7 @@ create table city as (
             st_geometrytype((st_dump(geom)).geom) as geom_type,
             name
         from
-            city_pre
+            country_pre
     ),
 
     b as (
@@ -23,7 +23,7 @@ create table city as (
     )
 
     select
-        (ST_Dump(st_polygonize(geom))).geom as geom,
+        ST_SimplifyPreserveTopology((ST_Dump(st_polygonize(geom))).geom, 0.00005) as geom,
         name
     from
         b
@@ -31,6 +31,6 @@ create table city as (
         name
 );
 
-drop table city_pre;
+drop table country_pre;
 
-create index on city using gist (geom);
+create index on country using gist (geom);

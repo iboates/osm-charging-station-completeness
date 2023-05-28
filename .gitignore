@@ -1,6 +1,5 @@
-api/
-data/
+../../ui/node_modules/mdn-data/api/
 notes/
-.env
+packages/processing/.env
 report/
 sqldialects.xml

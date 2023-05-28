@@ -1,7 +1,8 @@
 version: "3.9"
 services:
-  ocm-prod-db:
-    container_name: ocm-prod-db
+
+  csc-prod-db:
+    container_name: csc-prod-db
     image: postgis/postgis:13-master
     environment:
       - POSTGRES_DB=prod_db_name
@@ -15,39 +16,57 @@ services:
       timeout: 10s
       retries: 10
       start_period: 10s
-        #  ocm-process-db:
-        #container_name: ocm-process-db
-        #image: postgis/postgis:13-master
-        #    environment:
-        #- POSTGRES_DB=process_db_name
-        #- POSTGRES_USER=process_db_user
-        #- POSTGRES_PASSWORD=process_db_pass
-        #ports:
-        #- "25432:5432"
-        #healthcheck:
-        #test: [ "CMD", "pg_isready" ]
-        #interval: 10s
-        #timeout: 10s
-        #      retries: 10
-        #      start_period: 10s
-        #    depends_on:
-        #      ocm-prod-db:
-        #          condition: service_healthy
-        #  ocm-process:
-        #    container_name: ocm-process
-        #    build: .
-        #    environment:
-        #      - PBF_DOWNLOAD_LINK=https://planet.osm.org/pbf/planet-latest.osm.pbf
-        #      - PROCESS_DB_HOST=ocm-process-db
-        #      - PROCESS_DB_PORT=5432
-        #      - PROCESS_DB_NAME=process_db_name
-        #      - PROCESS_DB_USER=process_db_user
-        #      - PROCESS_DB_PASS=process_db_pass
-        #      - PROD_DB_HOST=ocm-prod-db
-        #      - PROD_DB_PORT=5432
-        #      - PROD_DB_NAME=prod_db_name
-        #      - PROD_DB_USER=prod_db_user
-        #      - PROD_DB_PASS=prod_db_pass
-        #    depends_on:
-        #      ocm-process-db:
-        #          condition: service_healthy
+
+  csc-process-db:
+    container_name: csc-process-db
+    image: postgis/postgis:13-master
+    environment:
+      - POSTGRES_DB=process_db_name
+      - POSTGRES_USER=process_db_user
+      - POSTGRES_PASSWORD=process_db_pass
+    ports:
+      - "25432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      csc-prod-db:
+        condition: service_healthy
+
+  csc-process:
+    container_name: csc-process
+    build:
+      context: packages/processing
+      dockerfile: Dockerfile
+    environment:
+#      - PBF_DOWNLOAD_LINK=https://planet.osm.org/pbf/planet-latest.osm.pbf
+      - PBF_DOWNLOAD_LINK=https://download.geofabrik.de/europe/germany/baden-wuerttemberg/karlsruhe-regbez-latest.osm.pbf
+      - PROCESS_DB_HOST=csc-process-db
+      - PROCESS_DB_PORT=5432
+      - PROCESS_DB_NAME=process_db_name
+      - PROCESS_DB_USER=process_db_user
+      - PROCESS_DB_PASS=process_db_pass
+      - PROD_DB_HOST=csc-prod-db
+      - PROD_DB_PORT=5432
+      - PROD_DB_NAME=prod_db_name
+      - PROD_DB_USER=prod_db_user
+      - PROD_DB_PASS=prod_db_pass
+    depends_on:
+      csc-process-db:
+        condition: service_healthy
+
+  csc-server:
+    container_name: csc-server
+    build:
+      context: packages/server
+      dockerfile: Dockerfile
+    environment:
+      - DB_HOST=csc-prod-db
+      - DB_PORT=5432
+      - DB_NAME=prod_db_name
+      - DB_USER=prod_db_user
+      - DB_PASS=prod_db_pass
+    ports:
+      - '80:80'

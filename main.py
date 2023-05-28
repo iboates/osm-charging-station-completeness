@@ -110,8 +110,8 @@ class CLI:
 
         _osm2pgsql(pbf, os.getenv("DB_NAME"), os.getenv("DB_USER"), os.getenv("DB_PASS"), schema="public",
                    host=os.getenv("DB_HOST"), port=os.getenv("DB_PORT"), flex_config=flex_config)
-        self.execute_sql("data/country_boundaries_to_polygon.sql")
-        self.execute_sql("data/cs_completeness.sql")
+        self.execute_sql("packages/processing/data/country_boundaries_to_polygon.sql")
+        self.execute_sql("packages/processing/data/cs_completeness.sql")
 
     def execute_sql(self, sql_file):
 
@@ -120,7 +120,7 @@ class CLI:
 
     def summarize(self):
 
-        res = pd.read_sql(sa.text(open("src/backend/sql/summarize_completeness.sql").read()),
+        res = pd.read_sql(sa.text(open("packages/server/sql/summarize_completeness.sql").read()),
                           self.engine,
                           dtype={"tag": pd.Int64Dtype(), "present": pd.Int64Dtype(), "missing": pd.Int64Dtype(), "present_in_parent": pd.Int64Dtype()})
 

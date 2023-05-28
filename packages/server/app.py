@@ -25,13 +25,13 @@ def _parse_study_area(study_area: geojson.GeoJSON):
 
     if study_area.get("features") is not None:
         if len(study_area["features"]) != 1:
-            raise ValueError("POSTed GeoJSON must have exactly one feature in it")
+            raise ValueError("POSTed GeoJSON must have exactly one feature in it and be a Polygon or Multipolygon.")
         first_feature = study_area["features"][0]["geometry"]
     else:
         first_feature = study_area
 
     if first_feature["type"] not in ("Polygon", "Multipolygon"):
-        raise ValueError("POSTed GeoJSON must have exactly one feature in it")
+        raise ValueError("POSTed GeoJSON must have exactly one feature in it and be a Polygon or Multipolygon.")
 
     return first_feature
 
@@ -52,3 +52,7 @@ def completeness():
     df = df.set_index("tag", drop=True).fillna(np.nan).replace([np.nan], [None])
     engine.dispose()
     return make_response(df.to_dict(orient="index"))
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80)
