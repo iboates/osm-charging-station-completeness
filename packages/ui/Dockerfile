@@ -7,4 +7,6 @@ RUN yarn install
 
 EXPOSE 3000
 
-ENTRYPOINT ["yarn", "dev", "--host"]
+RUN yarn build
+
+ENTRYPOINT ["yarn", "preview"]
