@@ -69,4 +69,21 @@ services:
       - DB_USER=prod_db_user
       - DB_PASS=prod_db_pass
     ports:
-      - '80:80'
+      - '8081:80'
+
+  csc-ui:
+    container_name: csc-ui
+    build:
+      context: packages/ui
+      dockerfile: Dockerfile
+    ports:
+      - '8082:3000'
+
+  csc-reverse-proxy:
+    container_name: csc-reverse-proxy
+#    image: nginx:latest
+    build:
+      context: packages/reverse_proxy
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
