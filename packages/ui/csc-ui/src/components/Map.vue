@@ -1,91 +1,70 @@
 <template>
-  <VLayoutItem model-value size="88">
-      <div class="ma-4">
-          <VBtn
-            @click="clear"
-            icon="mdi-shape-polygon-plus"
-            size="large"
-            color="primary"
-            elevation="8" />
-      </div>
-    </VLayoutItem>
+  <div style="position: relative; height: 100%">
+    <ol-map
+      :loadTilesWhileAnimating="true"
+      :loadTilesWhileInteracting="true"
+      style="height: 100%"
+    >
+      <ol-view ref="view" :center="center" :zoom="zoom" />
 
-  <ol-map
-    :loadTilesWhileAnimating="true"
-    :loadTilesWhileInteracting="true"
-    style="height:95%"
-  >
-    <ol-view
-      ref="view"
-      :center="center"
-      :rotation="rotation"
-      :zoom="zoom"
-      :projection="projection"
+      <ol-tile-layer>
+        <ol-source-osm />
+      </ol-tile-layer>
+
+      <ol-vector-layer>
+        <ol-source-vector ref="source">
+          <ol-interaction-draw v-if="draw" type="Polygon" @drawend="drawEnd">
+          </ol-interaction-draw>
+          <ol-interaction-modify v-if="modify"> </ol-interaction-modify>
+        </ol-source-vector>
+
+        <ol-style>
+          <ol-style-stroke color="red" :width="2"></ol-style-stroke>
+        </ol-style>
+      </ol-vector-layer>
+    </ol-map>
+
+    <v-btn
+      class="ma-4"
+      style="position: absolute; top: 0"
+      @click="clear"
+      icon="mdi-shape-polygon-plus"
+      size="large"
+      color="primary"
+      elevation="8"
     />
-
-
-    <ol-tile-layer>
-      <ol-source-osm />
-    </ol-tile-layer>
-
-    <ol-vector-layer>
-      <ol-source-vector
-        ref="source"
-      >
-        <ol-interaction-draw
-          v-if="draw"
-          type="Polygon"
-          @drawend="drawEnd"
-        >
-        </ol-interaction-draw>
-        <ol-interaction-modify
-          v-if="modify"
-        >
-          </ol-interaction-modify>
-      </ol-source-vector>
-
-      <ol-style>
-        <ol-style-stroke color="red" :width="2"></ol-style-stroke>
-      </ol-style>
-    </ol-vector-layer>
-  </ol-map>
+  </div>
 </template>
-  
-  <script>
-  import { ref, inject } from "vue";
-  export default {
-    setup() {
-      const center = ref([49.0069, 8.4037]);
-      const zoom = ref(8);
-      const rotation = ref(0);
-      const projection = ref("EPSG:4326");
-      return {
-        center,
-        zoom,
-        rotation,
-      };
+
+<script>
+import { fromLonLat } from "ol/proj";
+import { GeoJSON } from "ol/format";
+
+export default {
+  data() {
+    return {
+      center: fromLonLat([8.4037, 49.0069]),
+      zoom: 12,
+      draw: true,
+      modify: false,
+    };
+  },
+  props: {
+    features: Array,
+  },
+  methods: {
+    clear() {
+      this.draw = true;
+      this.modify = false;
     },
-    data() {
-        return {
-            draw: true,
-            modify: false
-        }
+    drawEnd(e) {
+      this.draw = false;
+      this.modify = true;
+      // const geometry = e.feature.getGeometry();
+      const geoJsonFormat = new GeoJSON({ featureProjection: "EPSG:3857" });
+      const feature = geoJsonFormat.writeFeatureObject(e.feature);
+      this.features.push(feature);
     },
-    props: {
-        features: null
-    },
-    methods: {
-        clear() {
-            this.draw = true;
-            this.modify = false;
-        },
-        drawEnd(e) {
-          this.draw = false;
-          this.modify = true;
-          let feature = e.feature.getGeometry().getCoordinates();
-          console.log(e.feature);
-          this.features.push(feature);
-        },
-    },
-  };
-  </script>
+  },
+};
+</script>
