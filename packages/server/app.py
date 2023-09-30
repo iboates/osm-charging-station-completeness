@@ -49,7 +49,7 @@ def _parse_study_area(study_area):
     else:
         first_feature = study_area
 
-    if first_feature["type"] not in ("Polygon", "Multipolygon"):
+    if first_feature["type"] not in ("Polygon", "MultiPolygon"):
         raise CSCException("POSTed GeoJSON must have exactly one feature in it and be a Polygon or Multipolygon.")
 
     return first_feature
