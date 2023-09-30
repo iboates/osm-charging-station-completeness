@@ -3,20 +3,19 @@ FROM bitnami/minideb
 RUN apt update
 RUN apt install -y build-essential git curl
 
-RUN git clone https://github.com/openstreetmap/osm2pgsql.git
+RUN git clone --depth 1 --branch 1.8.1 https://github.com/openstreetmap/osm2pgsql.git
 WORKDIR osm2pgsql
-RUN apt install -y make cmake g++ libboost-dev libboost-system-dev \
-  libboost-filesystem-dev libexpat1-dev zlib1g-dev libpotrace-dev cimg-dev \
-  libbz2-dev libpq-dev libproj-dev lua5.3 liblua5.3-dev pandoc
+RUN apt-get install -y make cmake g++ libboost-dev libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev \
+libpotrace-dev cimg-dev libbz2-dev libpq-dev libproj-dev lua5.3 liblua5.3-dev pandoc
 RUN mkdir build
 WORKDIR build
 RUN cmake ..
 RUN make
 RUN make install
-RUN apt install -y libluajit-5.1-dev
-RUN cmake -D WITH_LUAJIT=ON ..
 WORKDIR ..
-
+RUN apt-get install -y libluajit-5.1-dev
+WORKDIR ..
+RUN rm -r osm2pgsql
 # COPY run.sh run.sh
 # RUN chmod +x run.sh
 
