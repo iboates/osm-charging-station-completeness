@@ -22,7 +22,7 @@ RUN rm -r osm2pgsql
 
 RUN apt install -y osmium-tool
 RUN apt install -y wget
-RUN apt install -y postgresql-client-13
+RUN apt install -y postgresql-client
 
 COPY data data
 COPY run.sh run.sh
