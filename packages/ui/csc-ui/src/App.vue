@@ -48,7 +48,7 @@
         submit() {
             console.log(JSON.stringify(this.featuresAsGeoJson));
             this.axios
-              .post("http://localhost:80/summarize", this.featuresAsGeoJson)
+              .post("/api/completeness", this.featuresAsGeoJson)
               .then((response) => {
                 console.log(response.data)
               });

@@ -2,11 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY csc-ui ./
+COPY csc-ui/package.json /app/package.json
 RUN yarn install
 
 EXPOSE 3000
 
-RUN yarn build
-
-ENTRYPOINT ["yarn", "preview"]
+ENTRYPOINT ["yarn", "dev"]
