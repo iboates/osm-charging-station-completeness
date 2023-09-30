@@ -1,19 +1,13 @@
-with query_ts as (
-    select :query_timestamp as x
-),
-
-timestamp AS (
+with timestamp AS (
     SELECT
         csc.timestamp
     FROM
         cs_completeness csc,
         -- (SELECT '2023-09-30 12:00:00'::timestamp AS ts) ts
-        (SELECT x::timestamp as x from query_ts) as ts
-    WHERE
-        csc.timestamp <= ts.x
+        (SELECT :query_timestamp ::timestamp AS ts) ts
     ORDER BY
         -- order by minimal time going backwards from current timestamp
-        EXTRACT(EPOCH FROM age(ts, csc.timestamp)) ASC
+        EXTRACT(EPOCH FROM age(ts.ts, csc.timestamp)) ASC
     LIMIT
         1
 ),
