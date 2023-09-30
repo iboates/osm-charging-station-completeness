@@ -1,7 +1,28 @@
-with base as (
+with query_ts as (
+    select :query_timestamp as x
+),
+
+timestamp AS (
+    SELECT
+        csc.timestamp
+    FROM
+        cs_completeness csc,
+        -- (SELECT '2023-09-30 12:00:00'::timestamp AS ts) ts
+        (SELECT x::timestamp as x from query_ts) as ts
+    WHERE
+        csc.timestamp <= ts.x
+    ORDER BY
+        -- order by minimal time going backwards from current timestamp
+        EXTRACT(EPOCH FROM age(ts, csc.timestamp)) ASC
+    LIMIT
+        1
+),
+
+base as (
     select
         node_id
     from
+        timestamp,
         cs_completeness csc,
         (select ST_GeomFromGeoJSON(
 
@@ -17,6 +38,8 @@ with base as (
         ) as geom) sa
     where
         ST_Intersects(csc.geom, sa.geom)
+        and
+        csc.timestamp = (select timestamp from timestamp)
 )
 
 --"socket",

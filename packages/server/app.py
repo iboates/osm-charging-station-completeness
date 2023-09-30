@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+from datetime import datetime
 
 from dotenv import load_dotenv
 from flask import Flask, request, make_response
@@ -36,6 +37,14 @@ def _parse_study_area(study_area: geojson.GeoJSON):
     return first_feature
 
 
+def _parse_query_timestamp(query_timestamp):
+
+    if query_timestamp is None:
+        return datetime.now().strftime(format="%Y-%m-%d %H:%M")
+    datetime(query_timestamp)
+
+
+
 @app.route("/status")
 def status():
     return "OK"
@@ -44,15 +53,20 @@ def status():
 @app.route("/completeness", methods=["POST"])
 def completeness():
 
-    study_area = _parse_study_area(geojson.GeoJSON(request.json))
+    query_timestamp = _parse_query_timestamp(request.json.get("timestamp"))
+
+    study_area_geojson = request.json.get("studyArea")
+    study_area = _parse_study_area(geojson.GeoJSON(study_area_geojson))
+
     engine = sa.create_engine(f'postgresql://{os.getenv("DB_USER")}:{os.getenv("DB_PASS")}@{os.getenv("DB_HOST")}'
                               f':{os.getenv("DB_PORT")}/{os.getenv("DB_NAME")}')
-    df = pd.read_sql_query(sa.text(open(f"{HERE}/sql/summarize_completeness.sql").read()), engine,
-                           params={"study_area": json.dumps(study_area)})
+    df = pd.read_sql(sa.text(open(f"{HERE}/sql/summarize_completeness.sql").read()), engine,
+                           params={"study_area": json.dumps(study_area),
+                                   "query_timestamp": query_timestamp})
     df = df.set_index("tag", drop=True).fillna(np.nan).replace([np.nan], [None])
     engine.dispose()
     return make_response(df.to_dict(orient="index"))
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=8000, debug=True)
