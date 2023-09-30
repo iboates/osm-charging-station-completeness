@@ -69,7 +69,7 @@ services:
       - DB_USER=prod_db_user
       - DB_PASS=prod_db_pass
     ports:
-      - '8081:80'
+      - '8083:80'
 
   csc-ui:
     container_name: csc-ui
