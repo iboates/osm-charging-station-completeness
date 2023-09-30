@@ -1,58 +1,50 @@
 <template>
   <v-app>
     <v-main>
-      <Map :features=features />
-      <v-btn @click="submit">Submit</v-btn>
+      <Map @update:feature="feature = $event" />
     </v-main>
+    <v-footer app style="max-height: 50%; overflow: auto; align-items: initial;">
+      <Result v-if="completeness" :completeness="completeness" />
+      <v-btn v-else @click="submit">Submit</v-btn>
+    </v-footer>
   </v-app>
-
 </template>
 
-<!-- <script setup>
-  // import HelloWorld from '@/components/HelloWorld.vue'
-  import Map from '@/components/Map.vue'
-</script> -->
-
 <script>
-  import Map from '@/components/Map.vue';
-  
-  export default {
-    components: {
-      Map
-    },
-    data() {
-        return {
-          features: []
-        }
-    },
-    computed: {
-      featuresAsGeoJson() {
+import Map from "@/components/Map.vue";
+import Result from "@/components/Result.vue";
 
-        let geoJson = {
-          "type": "FeatureCollection",
-          "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-          "features": []
-        }
-
-        for (let feature of this.features) {
-          geoJson.features.push(
-            { "type": "Feature", "properties": { }, "geometry": { "type": "Polygon", "coordinates": [ feature ] } },
-          )
-        }
-
-        return geoJson
-
+export default {
+  components: {
+    Map,
+    Result,
+  },
+  data() {
+    return {
+      completeness: null,
+      feature: null,
+    };
+  },
+  computed: {
+    featureCollection() {
+      if (!this.feature) {
+        return null
       }
+      return {
+        type: "FeatureCollection",
+        features: [this.feature],
+      };
     },
-    methods: {
-        submit() {
-            console.log(JSON.stringify(this.featuresAsGeoJson));
-            this.axios
-              .post("/api/completeness", this.featuresAsGeoJson)
-              .then((response) => {
-                console.log(response.data)
-              });
-              }
-    }
-  }
+  },
+  methods: {
+    submit() {
+      const requestData = {
+        studyArea: this.featureCollection,
+      };
+      this.axios.post("/api/completeness", requestData).then((response) => {
+        this.completeness = response.data;
+      });
+    },
+  },
+};
 </script>
