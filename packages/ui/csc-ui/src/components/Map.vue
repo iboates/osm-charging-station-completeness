@@ -26,7 +26,7 @@
 
     <v-btn
       class="ma-4"
-      style="position: absolute; top: 0"
+      style="position: absolute; bottom: 0"
       @click="clear"
       icon="mdi-shape-polygon-plus"
       size="large"
