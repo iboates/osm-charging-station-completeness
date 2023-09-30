@@ -1,46 +1,49 @@
 <template>
-  <v-app ref="app">
+  <v-app>
     <v-main>
-      <Map :features="features" />
+      <Map @update:feature="feature = $event" />
     </v-main>
-    <v-footer app name="footer">
-      <v-btn @click="submit">Submit</v-btn>
+    <v-footer app style="max-height: 50%; overflow: auto; align-items: initial;">
+      <Result v-if="completeness" :completeness="completeness" />
+      <v-btn v-else @click="submit">Submit</v-btn>
     </v-footer>
   </v-app>
 </template>
 
 <script>
 import Map from "@/components/Map.vue";
+import Result from "@/components/Result.vue";
 
 export default {
   components: {
     Map,
+    Result,
   },
   data() {
     return {
-      features: [],
+      completeness: null,
+      feature: null,
     };
   },
   computed: {
-    featuresAsGeoJson() {
-      let geoJson = {
+    featureCollection() {
+      if (!this.feature) {
+        return null
+      }
+      return {
         type: "FeatureCollection",
-        features: this.features,
+        features: [this.feature],
       };
-
-      return geoJson;
     },
   },
   methods: {
     submit() {
       const requestData = {
-        studyArea: this.featuresAsGeoJson
-      }
-      this.axios
-        .post("/api/completeness", requestData)
-        .then((response) => {
-          console.log(response.data);
-        });
+        studyArea: this.featureCollection,
+      };
+      this.axios.post("/api/completeness", requestData).then((response) => {
+        this.completeness = response.data;
+      });
     },
   },
 };

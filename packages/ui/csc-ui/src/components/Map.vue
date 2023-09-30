@@ -37,20 +37,20 @@
 </template>
 
 <script>
-import { fromLonLat } from "ol/proj";
+import Feature from "ol/Feature";
 import { GeoJSON } from "ol/format";
+import { MultiPolygon } from "ol/geom";
+import { fromLonLat } from "ol/proj";
 
 export default {
   data() {
     return {
+      multiPolygon: new MultiPolygon([]),
       center: fromLonLat([8.4037, 49.0069]),
       zoom: 12,
-      draw: true,
+      draw: false,
       modify: false,
     };
-  },
-  props: {
-    features: Array,
   },
   methods: {
     clear() {
@@ -60,10 +60,10 @@ export default {
     drawEnd(e) {
       this.draw = false;
       this.modify = true;
-      // const geometry = e.feature.getGeometry();
+      this.multiPolygon.appendPolygon(e.feature.getGeometry());
       const geoJsonFormat = new GeoJSON({ featureProjection: "EPSG:3857" });
-      const feature = geoJsonFormat.writeFeatureObject(e.feature);
-      this.features.push(feature);
+      const feature = geoJsonFormat.writeFeatureObject(new Feature(this.multiPolygon));
+      this.$emit("update:feature", feature);
     },
   },
 };
