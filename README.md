@@ -109,7 +109,7 @@ Both of these keys are optional. Omitting `"studyArea"` will simply summarize th
 
 Specify a study area with the `"studyArea"` key mapping to a valid GeoJSON to filter the results to a specific area.
 Note that this GeoJSON must contain only one feature and it must be a Polygon or a MultiPolygon. Specify a time interval
-with the `"timestamp"` key as follows:
+with the `"timestamps"` key as follows:
 
 ```json
 {
@@ -119,7 +119,7 @@ with the `"timestamp"` key as follows:
 ```
 
 Both of these keys are optional. Omitting `"studyArea"` will simply summarize the entire database. Omitting
-`"timestamp"` will only summarize all versions of the database.
+`"timestamps"` will only summarize all versions of the database.
 
 In contrast to `/completeness`, this endpoint returns tag completeness results as arrays, and also returns a
 `"timestamps"` key which corresponds to the timestamp for each array value in each tag result.
